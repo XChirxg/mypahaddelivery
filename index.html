@@ -110,61 +110,20 @@ label {
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-/* NAVBAR */
-.nav {
-  background: linear-gradient(135deg, #113c26, var(--g));
-  color: #fff;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: var(--shadow);
-}
-
-.nav-brand {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-brand span {
-  font-size: 11px;
-  background: rgba(255,255,255,0.15);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: 500;
-}
-
-.nav-profile {
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.nav-profile .driver-name {
-  font-weight: 600;
-}
-
-.logout-btn {
-  background: rgba(255,255,255,0.15);
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: var(--rs);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.logout-btn:hover {
-  background: rgba(255,255,255,0.25);
-}
+<!-- ================= AUTH NAV ================= -->
+<div class="nav" id="mainNav">
+  <div class="nav-brand">🏔 MyPahad <span>Delivery Portal</span></div>
+  <div class="nav-profile hidden" id="navProfile">
+    <span class="driver-name" id="navDriverName">Loading...</span>
+    <div style="position:relative; display:inline-block;" id="settings-wrap">
+      <button class="logout-btn" onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
+      <div class="settings-dd hidden" id="settingsMenu" style="position:absolute; top:36px; right:0; background:white; color:black; border:1px solid #ddd; border-radius:6px; width:150px; z-index:200; box-shadow:0 3px 12px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden;">
+        <button onclick="openDeleteModal()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#ef4444; font-weight:600; cursor:pointer; width:100%;">Delete Account</button>
+        <button onclick="logout()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#333; font-weight:600; border-top:1px solid #eee; cursor:pointer; width:100%;">Logout</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 /* AUTHENTICATION SCREEN */
 .auth-container {
@@ -605,10 +564,14 @@ label {
 <div class="nav" id="mainNav">
   <div class="nav-brand">🏔 MyPahad <span>Delivery Portal</span></div>
   <div class="nav-profile hidden" id="navProfile">
-    <div class="driver-info-nav">
-      <span class="driver-name" id="navDriverName">Loading...</span>
+    <span class="driver-name" id="navDriverName">Loading...</span>
+    <div style="position:relative; display:inline-block;" id="settings-wrap">
+      <button class="logout-btn" onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
+      <div class="settings-dd hidden" id="settingsMenu" style="position:absolute; top:36px; right:0; background:white; color:black; border:1px solid #ddd; border-radius:6px; width:150px; z-index:200; box-shadow:0 3px 12px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden;">
+        <button onclick="openDeleteModal()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#ef4444; font-weight:600; cursor:pointer; width:100%;">Delete Account</button>
+        <button onclick="logout()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#333; font-weight:600; border-top:1px solid #eee; cursor:pointer; width:100%;">Logout</button>
+      </div>
     </div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
 
@@ -703,6 +666,25 @@ label {
   <div class="delivery-list" id="deliveriesGrid"></div>
 </div>
 
+<!-- DELETE ACCOUNT MODAL -->
+<div class="mo hidden" id="deleteModal" style="display:flex; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; padding:16px;">
+  <div class="mbox" style="width:100%; max-width:400px; padding:24px; border-radius:12px; background:white; position:relative; box-shadow:var(--shadow-lg);">
+    <h3 style="font-size:16px; font-weight:700; color:#ef4444; margin-bottom:8px;">⚠️ Delete Account Permanent?</h3>
+    <p style="font-size:12px; color:var(--t2); line-height:1.5; margin-bottom:16px;">
+      This action is permanent and cannot be undone. All your profile data, registration details, and active status will be permanently deleted from MyPahad.
+    </p>
+    <div style="background:#fff7ed; border:1px solid #ffedd5; padding:12px; border-radius:8px; margin-bottom:16px;">
+      <p style="font-size:11px; color:#c2410c; font-weight:600; line-height:1.4;" id="deleteTimerText">
+        Please wait 60 seconds to confirm...
+      </p>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-pri" id="cancelDeleteBtn" onclick="closeDeleteModal()" style="margin-top:0; background:var(--bd); color:var(--t2); flex:1;">Cancel</button>
+      <button class="btn-pri" id="confirmDeleteBtn" onclick="executeAccountDeletion()" disabled style="margin-top:0; background:#ef4444; flex:1; opacity:0.5; cursor:not-allowed;">Confirm (60s)</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── SUPABASE INITIALIZATION ────────────────────────────────────────────────
 const MAIN_DB_URL = 'https://khbotkadtbkwqxjxlyhm.supabase.co';
@@ -722,6 +704,15 @@ let localBusinesses = [];
 let localBusinessMap = {};
 let allOrders = [];
 let usernameTimeout = null;
+
+// Normalizes phone numbers for WhatsApp API
+function formatPhoneForWhatsApp(phone) {
+  let num = String(phone).replace(/\D/g, '');
+  if (num.length === 10) {
+    return '91' + num;
+  }
+  return num;
+}
 
 // Show Toast Alert
 function showToast(msg) {
@@ -828,6 +819,12 @@ async function handleLogin() {
     return;
   }
 
+  if (!profile.is_approved) {
+    await sbMain.auth.signOut();
+    errDiv.textContent = 'Your driver account is pending approval by the manager.';
+    return;
+  }
+
   driverProfile = profile;
   showDashboard();
 }
@@ -884,13 +881,26 @@ async function handleRegister() {
     phone: phone,
     address: 'Delivery Partner',
     description: 'Registered MyPahad Delivery Driver',
-    is_approved: true, // auto-approve driver for testing
+    is_approved: false, // default to false (requires manual manager approval)
     is_active: true
   });
 
   if (iErr) {
     errDiv.textContent = 'Registration failed during profile setup: ' + iErr.message;
     return;
+  }
+
+  // Register driver profile in Leads DB drivers table
+  const { error: dErr } = await sbLeads.from('drivers').insert({
+    id: uid,
+    name: name,
+    phone: phone,
+    area_id: areaId,
+    is_approved: false
+  });
+
+  if (dErr) {
+    console.error("Failed to insert driver profile in Leads DB:", dErr);
   }
 
   if (data.session) {
@@ -940,42 +950,42 @@ async function loadAreaBusinesses() {
 }
 
 async function loadOrdersData() {
-  if (localBusinesses.length === 0) {
-    allOrders = [];
-    renderDeliveries();
-    return;
-  }
-
-  const bizIds = localBusinesses.map(b => b.id);
-  
-  // Fetch matching delivery orders
-  const { data, error } = await sbLeads.from('orders')
-    .select('*')
-    .in('business_id', bizIds)
-    .eq('delivery_type', 'delivery')
+  // Query deliveries from Leads DB
+  const { data: delData, error: delErr } = await sbLeads.from('delivery')
+    .select('*, orders(*)')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error("Failed fetching orders:", error);
+  if (delErr) {
+    console.error("Failed fetching deliveries:", delErr);
+    showToast("Error loading deliveries: " + delErr.message);
     return;
   }
 
-  allOrders = data || [];
+  // Map deliveries to a flat structure for rendering
+  allOrders = (delData || []).map(d => {
+    if (!d.orders) return null;
+    return {
+      ...d.orders,
+      delivery_row_id: d.id,
+      delivery_driver_id: d.driver_id,
+      delivery_status: d.status,
+      delivery_area_id: d.area_id
+    };
+  }).filter(Boolean);
+
   updateDashboardStats();
   renderDeliveries();
 }
 
 function updateDashboardStats() {
-  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
-  
-  // Active deliveries: assigned to driver and dispatched status
+  // Active deliveries: assigned to current driver and in dispatched status
   const activeCount = allOrders.filter(o => {
-    return o.status === 'dispatched' && o.notes && o.notes.includes(driverMatchString);
+    return o.delivery_status === 'dispatched' && o.delivery_driver_id === driverProfile.user_id;
   }).length;
 
-  // Completed deliveries: assigned to driver and delivered status
+  // Completed deliveries: assigned to current driver and in delivered status
   const completedCount = allOrders.filter(o => {
-    return o.status === 'delivered' && o.notes && o.notes.includes(driverMatchString);
+    return o.delivery_status === 'delivered' && o.delivery_driver_id === driverProfile.user_id;
   }).length;
 
   document.getElementById('stat-active').textContent = activeCount;
@@ -987,19 +997,17 @@ function renderDeliveries() {
   const grid = document.getElementById('deliveriesGrid');
   grid.innerHTML = '';
 
-  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
-
   // Filter orders by active tab
   const filtered = allOrders.filter(o => {
-    const isAssignedToMe = o.notes && o.notes.includes(driverMatchString);
-    const isAssignedToOther = o.notes && o.notes.includes('[Delivery Assigned:') && !isAssignedToMe;
+    const isAssignedToMe = o.delivery_driver_id === driverProfile.user_id;
+    const isAssignedToOther = o.delivery_driver_id && !isAssignedToMe;
 
     if (activeTab === 'avail') {
-      // Pending or Confirmed order that hasn't been assigned to anyone yet
-      return (o.status === 'pending' || o.status === 'confirmed') && !isAssignedToMe && !isAssignedToOther;
+      // Unassigned delivery order
+      return !o.delivery_driver_id && (o.delivery_status === 'pending' || o.status === 'pending' || o.status === 'confirmed');
     } else {
       // My Active deliveries
-      return isAssignedToMe && o.status === 'dispatched';
+      return isAssignedToMe && o.delivery_status === 'dispatched';
     }
   });
 
@@ -1032,18 +1040,50 @@ function renderDeliveries() {
     const ref = 'MP' + o.id.slice(0, 6).toUpperCase();
     const mapId = 'map-' + o.id;
 
-    // Build items list representation
+    // Build items list and cost representation
     let itemsHtml = '';
+    let itemsText = '';
+    let subtotal = 0;
     try {
       const itemsList = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
       if (Array.isArray(itemsList)) {
         itemsHtml = itemsList.map(it => `${it.name} (${it.quantity} ${it.qty_label || 'Qty'})`).join(', ');
+        itemsText = itemsList.map((it, idx) => {
+          const qty = parseInt(it.quantity) || 1;
+          const price = parseFloat(it.price) || 0;
+          const lineTotal = qty * price;
+          subtotal += lineTotal;
+          return `${idx + 1}. ${it.name} x ${qty} (@ ₹${price}) = ₹${lineTotal}`;
+        }).join('\n');
       }
     } catch(e){}
 
     // Build pickup business details
     const pickupAddr = o.business_location?.address || biz.address || 'Town Shop';
     const dropoffAddr = o.delivery_address || 'Customer Location';
+
+    const formattedBizPhone = formatPhoneForWhatsApp(biz.phone);
+    const formattedCustPhone = formatPhoneForWhatsApp(o.customer_phone);
+
+    const bizWaMsg = `Hi, I am your delivery partner ${driverProfile.business_name} from MyPahad. I have accepted your order ${ref} for customer ${o.customer_name}. I am on my way to pick up the items:
+
+${itemsText}
+
+Subtotal: ₹${subtotal}
+Total: ₹${o.total_price}
+
+Please keep it ready. Thanks!`;
+
+    const custWaMsg = `Hi ${o.customer_name}, I am your delivery partner ${driverProfile.business_name} from MyPahad. I am delivering your order ${ref} from ${o.business_name}.
+
+Items:
+${itemsText}
+
+Subtotal: ₹${subtotal}
+Delivery Fee: ₹${o.delivery_charges || '0'}
+Total Bill: ₹${o.total_price}
+
+I will be arriving soon. Please share your live location or detailed address if needed. Thanks!`;
 
     card.innerHTML = `
       <div class="card-header">
@@ -1061,7 +1101,7 @@ function renderDeliveries() {
             ${biz.phone ? `
               <div class="route-contact">
                 <a href="tel:${biz.phone}" class="contact-btn">📞 Call</a>
-                <a href="https://wa.me/91${biz.phone}" target="_blank" class="contact-btn">💬 Chat</a>
+                <a href="https://wa.me/${formattedBizPhone}?text=${encodeURIComponent(bizWaMsg)}" target="_blank" class="contact-btn">💬 Chat</a>
               </div>
             ` : ''}
           </div>
@@ -1076,7 +1116,7 @@ function renderDeliveries() {
             <div class="route-addr">${dropoffAddr}</div>
             <div class="route-contact">
               <a href="tel:${o.customer_phone}" class="contact-btn">📞 Call</a>
-              <a href="https://wa.me/91${o.customer_phone}" target="_blank" class="contact-btn">💬 Chat</a>
+              <a href="https://wa.me/${formattedCustPhone}?text=${encodeURIComponent(custWaMsg)}" target="_blank" class="contact-btn">💬 Chat</a>
             </div>
           </div>
         </div>
@@ -1152,32 +1192,34 @@ function initCardMap(mapId, pickupLL, dropoffLL) {
 
 // ─── ORDER ACCEPTANCE LOGIC ──────────────────────────────────────────────────
 async function acceptDelivery(orderId) {
-  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
-  
   try {
-    // 1. Transaction check: verify order is still unassigned
-    const { data: o, error: fErr } = await sbLeads.from('orders').select('*').eq('id', orderId).single();
-    if (fErr || !o) {
-      showToast('Delivery order details not found.');
+    // 1. Transaction check: verify delivery is still unassigned
+    const { data: d, error: fErr } = await sbLeads.from('delivery')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (fErr || !d) {
+      showToast('Delivery record not found.');
       return;
     }
 
-    if (o.notes && o.notes.includes('[Delivery Assigned:')) {
+    if (d.driver_id) {
       showToast('This order has already been accepted by another driver.');
       loadOrdersData();
       return;
     }
 
-    // 2. Perform safe atomic update logging assignment details to notes
-    const newNotes = o.notes ? `${o.notes}\n\n${driverMatchString}` : driverMatchString;
-    
-    const { error: uErr } = await sbLeads.from('orders')
+    // 2. Perform safe update assigning order to driver
+    const { error: uErr } = await sbLeads.from('delivery')
       .update({
+        driver_id: driverProfile.user_id,
+        driver_name: driverProfile.business_name,
+        driver_phone: driverProfile.phone,
         status: 'dispatched',
-        notes: newNotes,
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId);
+      .eq('id', d.id);
 
     if (uErr) {
       showToast('Error accepting delivery: ' + uErr.message);
@@ -1195,12 +1237,12 @@ async function acceptDelivery(orderId) {
 // ─── COMPLETION LOGIC ────────────────────────────────────────────────────────
 async function completeDelivery(orderId) {
   try {
-    const { error } = await sbLeads.from('orders')
+    const { error } = await sbLeads.from('delivery')
       .update({
         status: 'delivered',
         updated_at: new Date().toISOString()
       })
-      .eq('id', orderId);
+      .eq('order_id', orderId);
 
     if (error) {
       showToast('Error completing order: ' + error.message);
@@ -1212,6 +1254,77 @@ async function completeDelivery(orderId) {
   } catch(err) {
     console.error("Complete flow crash:", err);
     showToast('Failed to complete action.');
+  }
+}
+
+// ─── SETTINGS & DELETE ACCOUNT FLOW ──────────────────────────────────────────
+function toggleSettingsMenu(e) {
+  e.stopPropagation();
+  document.getElementById('settingsMenu').classList.toggle('hidden');
+}
+
+document.addEventListener('click', () => {
+  const menu = document.getElementById('settingsMenu');
+  if (menu) menu.classList.add('hidden');
+});
+
+let deleteTimer = null;
+let deleteSecondsRemaining = 60;
+
+function openDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('hidden');
+  document.getElementById('confirmDeleteBtn').disabled = true;
+  document.getElementById('confirmDeleteBtn').style.opacity = '0.5';
+  document.getElementById('confirmDeleteBtn').style.cursor = 'not-allowed';
+  document.getElementById('confirmDeleteBtn').textContent = 'Confirm (60s)';
+  
+  deleteSecondsRemaining = 60;
+  clearInterval(deleteTimer);
+  
+  deleteTimer = setInterval(() => {
+    deleteSecondsRemaining--;
+    if (deleteSecondsRemaining > 0) {
+      document.getElementById('deleteTimerText').textContent = `Please wait ${deleteSecondsRemaining} seconds to confirm...`;
+      document.getElementById('confirmDeleteBtn').textContent = `Confirm (${deleteSecondsRemaining}s)`;
+    } else {
+      clearInterval(deleteTimer);
+      document.getElementById('deleteTimerText').textContent = 'Verification complete. You can now delete your account permanently.';
+      document.getElementById('deleteTimerText').style.color = '#ef4444';
+      
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.cursor = 'pointer';
+      confirmBtn.textContent = 'Confirm Delete (Permanent)';
+    }
+  }, 1000);
+}
+
+function closeDeleteModal() {
+  clearInterval(deleteTimer);
+  document.getElementById('deleteModal').classList.add('hidden');
+}
+
+async function executeAccountDeletion() {
+  if (!driverProfile) return;
+  
+  try {
+    showToast('Deleting account data...');
+    // Delete driver profile row from drivers table in Leads DB
+    await sbLeads.from('drivers').delete().eq('id', driverProfile.user_id);
+    
+    // Delete profile row from businesses table in Main DB
+    const { error } = await sbMain.from('businesses').delete().eq('user_id', driverProfile.user_id);
+    if (error) {
+      showToast('Error deleting profile: ' + error.message);
+      return;
+    }
+
+    showToast('Account profile deleted successfully.');
+    closeDeleteModal();
+    await logout();
+  } catch(e) {
+    showToast('Deletion failed: ' + e.message);
   }
 }
 
@@ -1244,6 +1357,12 @@ async function init() {
       .maybeSingle();
 
     if (profile) {
+      if (!profile.is_approved) {
+        await sbMain.auth.signOut();
+        switchAuthTab('login');
+        document.getElementById('login-err').textContent = 'Your driver account is pending approval by the manager.';
+        return;
+      }
       driverProfile = profile;
       showDashboard();
       return;
