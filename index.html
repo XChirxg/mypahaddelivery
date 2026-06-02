@@ -1054,28 +1054,28 @@ async function loadAreaBusinesses() {
 }
 
 async function loadOrdersData() {
-  // Query deliveries from Leads DB
-  const { data: delData, error: delErr } = await sbLeads.from('delivery')
-    .select('*, orders(*)')
+  // Query deliveries directly from orders table in Leads DB
+  const { data, error } = await sbLeads.from('orders')
+    .select('*')
+    .eq('delivery_type', 'delivery')
     .order('created_at', { ascending: false });
 
-  if (delErr) {
-    console.error("Failed fetching deliveries:", delErr);
-    showToast("Error loading deliveries: " + delErr.message);
+  if (error) {
+    console.error("Failed fetching orders:", error);
+    showToast("Error loading deliveries: " + error.message);
     return;
   }
 
-  // Map deliveries to a flat structure for rendering
-  allOrders = (delData || []).map(d => {
-    if (!d.orders) return null;
+  // Map properties directly (driver_id, status represent the assignment)
+  allOrders = (data || []).map(o => {
     return {
-      ...d.orders,
-      delivery_row_id: d.id,
-      delivery_driver_id: d.driver_id,
-      delivery_status: d.status,
-      delivery_area_id: d.area_id
+      ...o,
+      delivery_row_id: o.id,
+      delivery_driver_id: o.driver_id,
+      delivery_status: o.status,
+      delivery_area_id: o.area_id || driverProfile.area_id
     };
-  }).filter(Boolean);
+  });
 
   updateDashboardStats();
   renderDeliveries();
@@ -1297,33 +1297,34 @@ function initCardMap(mapId, pickupLL, dropoffLL) {
 // ─── ORDER ACCEPTANCE LOGIC ──────────────────────────────────────────────────
 async function acceptDelivery(orderId) {
   try {
-    // 1. Transaction check: verify delivery is still unassigned
-    const { data: d, error: fErr } = await sbLeads.from('delivery')
+    // 1. Transaction check: verify order is still unassigned
+    const { data: o, error: fErr } = await sbLeads.from('orders')
       .select('*')
-      .eq('order_id', orderId)
+      .eq('id', orderId)
       .single();
 
-    if (fErr || !d) {
-      showToast('Delivery record not found.');
+    if (fErr || !o) {
+      showToast('Order not found.');
       return;
     }
 
-    if (d.driver_id) {
+    if (o.driver_id) {
       showToast('This order has already been accepted by another driver.');
       loadOrdersData();
       return;
     }
 
     // 2. Perform safe update assigning order to driver
-    const { error: uErr } = await sbLeads.from('delivery')
+    const { error: uErr } = await sbLeads.from('orders')
       .update({
         driver_id: driverProfile.user_id,
         driver_name: driverProfile.business_name,
         driver_phone: driverProfile.phone,
         status: 'dispatched',
+        notes: `[Driver Assigned: ${driverProfile.business_name} (${driverProfile.phone})]\n` + (o.notes || ''),
         updated_at: new Date().toISOString()
       })
-      .eq('id', d.id);
+      .eq('id', orderId);
 
     if (uErr) {
       showToast('Error accepting delivery: ' + uErr.message);
@@ -1341,12 +1342,12 @@ async function acceptDelivery(orderId) {
 // ─── COMPLETION LOGIC ────────────────────────────────────────────────────────
 async function completeDelivery(orderId) {
   try {
-    const { error } = await sbLeads.from('delivery')
+    const { error } = await sbLeads.from('orders')
       .update({
         status: 'delivered',
         updated_at: new Date().toISOString()
       })
-      .eq('order_id', orderId);
+      .eq('id', orderId);
 
     if (error) {
       showToast('Error completing order: ' + error.message);
