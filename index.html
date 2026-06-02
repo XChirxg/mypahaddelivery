@@ -110,20 +110,107 @@ label {
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-<!-- ================= AUTH NAV ================= -->
-<div class="nav" id="mainNav">
-  <div class="nav-brand">🏔 MyPahad <span>Delivery Portal</span></div>
-  <div class="nav-profile hidden" id="navProfile">
-    <span class="driver-name" id="navDriverName">Loading...</span>
-    <div style="position:relative; display:inline-block;" id="settings-wrap">
-      <button class="logout-btn" onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
-      <div class="settings-dd hidden" id="settingsMenu" style="position:absolute; top:36px; right:0; background:white; color:black; border:1px solid #ddd; border-radius:6px; width:150px; z-index:200; box-shadow:0 3px 12px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden;">
-        <button onclick="openDeleteModal()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#ef4444; font-weight:600; cursor:pointer; width:100%;">Delete Account</button>
-        <button onclick="logout()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#333; font-weight:600; border-top:1px solid #eee; cursor:pointer; width:100%;">Logout</button>
-      </div>
-    </div>
-  </div>
-</div>
+/* HEADER NAVIGATION */
+.nav {
+  background: linear-gradient(135deg, #113c26, var(--g));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.nav-brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-brand span {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  padding-left: 8px;
+  margin-left: 2px;
+}
+
+.nav-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.driver-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--rs);
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.settings-dd {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: var(--rs);
+  width: 140px;
+  z-index: 300;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-dd button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  color: var(--t);
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.settings-dd button:hover {
+  background: var(--bg);
+}
+
+.settings-dd button.delete-btn {
+  color: #ef4444;
+}
+
+.settings-dd button.logout-action-btn {
+  border-top: 1px solid var(--bd);
+  color: var(--t2);
+}
 
 /* AUTHENTICATION SCREEN */
 .auth-container {
@@ -442,6 +529,7 @@ label {
 
 .route-contact {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 6px;
 }
@@ -567,9 +655,9 @@ label {
     <span class="driver-name" id="navDriverName">Loading...</span>
     <div style="position:relative; display:inline-block;" id="settings-wrap">
       <button class="logout-btn" onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
-      <div class="settings-dd hidden" id="settingsMenu" style="position:absolute; top:36px; right:0; background:white; color:black; border:1px solid #ddd; border-radius:6px; width:150px; z-index:200; box-shadow:0 3px 12px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden;">
-        <button onclick="openDeleteModal()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#ef4444; font-weight:600; cursor:pointer; width:100%;">Delete Account</button>
-        <button onclick="logout()" style="background:none; border:none; padding:10px 14px; text-align:left; font-size:12px; color:#333; font-weight:600; border-top:1px solid #eee; cursor:pointer; width:100%;">Logout</button>
+      <div class="settings-dd hidden" id="settingsMenu">
+        <button onclick="openDeleteModal()" class="delete-btn">Delete Account</button>
+        <button onclick="logout()" class="logout-action-btn">Logout</button>
       </div>
     </div>
   </div>
