@@ -969,7 +969,7 @@ async function handleRegister() {
     driverProfile = profile;
     showDashboard();
   } else {
-    showToast('Check email for verification, then login!');
+    showToast('Verification email sent! Please check your email to verify.');
     switchAuthTab('login');
     document.getElementById('le').value = email;
   }
@@ -1396,6 +1396,14 @@ async function logout() {
 
 // ─── BOOTSTRAP INITIALIZATION ────────────────────────────────────────────────
 async function init() {
+  // Detect if redirected from email confirmation link
+  const hash = window.location.hash;
+  if (hash && (hash.includes('access_token=') || hash.includes('type=signup'))) {
+    showToast('Email verified successfully! Welcome to MyPahad.');
+    // Clean hash from URL without reloading
+    history.replaceState(null, null, ' ');
+  }
+
   // Check if session is already active
   const { data: { session } } = await sbLeads.auth.getSession();
   await loadTownsDropdown();
