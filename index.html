@@ -826,22 +826,7 @@ function switchDashboardTab(tab) {
   renderDeliveries();
 }
 
-// Auto-check/create 'Delivery' category
-async function getOrCreateDeliveryCategoryId() {
-  const { data: exCat } = await sbMain.from('categories').select('id').eq('slug', 'delivery').maybeSingle();
-  if (exCat) return exCat.id;
 
-  const { data: newCat, error } = await sbMain.from('categories').insert({
-    name: 'Delivery',
-    slug: 'delivery'
-  }).select('id').single();
-
-  if (error) {
-    console.error("Failed creating Delivery category:", error);
-    return null;
-  }
-  return newCat.id;
-}
 
 // Verify username availability during signup
 async function validateUsername(val) {
@@ -887,31 +872,34 @@ async function handleLogin() {
     return;
   }
 
-  const { data, error } = await sbMain.auth.signInWithPassword({ email, password });
+  const { data, error } = await sbLeads.auth.signInWithPassword({ email, password });
   if (error) {
     errDiv.textContent = error.message;
     return;
   }
 
-  // Load and verify delivery person profile
-  const deliveryCatId = await getOrCreateDeliveryCategoryId();
-  const { data: profile, error: pErr } = await sbMain.from('businesses')
-    .select('*, areas(name)')
-    .eq('user_id', data.user.id)
-    .eq('category_id', deliveryCatId)
+  // Load and verify delivery person profile from Leads DB
+  const { data: profile, error: pErr } = await sbLeads.from('drivers')
+    .select('*')
+    .eq('id', data.user.id)
     .maybeSingle();
 
   if (pErr || !profile) {
-    await sbMain.auth.signOut();
+    await sbLeads.auth.signOut();
     errDiv.textContent = 'User account is not registered as a delivery partner.';
     return;
   }
 
   if (!profile.is_approved) {
-    await sbMain.auth.signOut();
+    await sbLeads.auth.signOut();
     errDiv.textContent = 'Your driver account is pending approval by the manager.';
     return;
   }
+
+  // Fetch area name from Main DB
+  const { data: areaData } = await sbMain.from('areas').select('name').eq('id', profile.area_id).single();
+  profile.areas = { name: areaData ? areaData.name : 'Local Area' };
+  profile.user_id = profile.id; // ensure compatibility with user_id field
 
   driverProfile = profile;
   showDashboard();
@@ -937,15 +925,8 @@ async function handleRegister() {
     return;
   }
 
-  // Ensure category exists
-  const deliveryCatId = await getOrCreateDeliveryCategoryId();
-  if (!deliveryCatId) {
-    errDiv.textContent = 'Database setup error. Could not assign category.';
-    return;
-  }
-
-  // Signup
-  const { data, error } = await sbMain.auth.signUp({ email, password: pass });
+  // Signup in Leads DB
+  const { data, error } = await sbLeads.auth.signUp({ email, password: pass });
   if (error) {
     errDiv.textContent = error.message;
     return;
@@ -957,47 +938,34 @@ async function handleRegister() {
     return;
   }
 
-  // Create Business record acting as Delivery Partner
-  const { error: iErr } = await sbMain.from('businesses').insert({
-    user_id: uid,
-    area_id: areaId,
-    business_name: name,
-    username: uname,
-    category_id: deliveryCatId,
-    type: 'service',
-    whatsapp: phone,
-    phone: phone,
-    address: 'Delivery Partner',
-    description: 'Registered MyPahad Delivery Driver',
-    is_approved: false, // default to false (requires manual manager approval)
-    is_active: true
-  });
-
-  if (iErr) {
-    errDiv.textContent = 'Registration failed during profile setup: ' + iErr.message;
-    return;
-  }
-
-  // Register driver profile in Leads DB drivers table
+  // Register driver profile only in Leads DB drivers table
   const { error: dErr } = await sbLeads.from('drivers').insert({
     id: uid,
     name: name,
     phone: phone,
+    username: uname,
     area_id: areaId,
     is_approved: false
   });
 
   if (dErr) {
-    console.error("Failed to insert driver profile in Leads DB:", dErr);
+    errDiv.textContent = 'Registration failed during profile setup: ' + dErr.message;
+    return;
   }
 
   if (data.session) {
     showToast('Driver account registered successfully!');
     // Load profile
-    const { data: profile } = await sbMain.from('businesses')
-      .select('*, areas(name)')
-      .eq('user_id', uid)
+    const { data: profile } = await sbLeads.from('drivers')
+      .select('*')
+      .eq('id', uid)
       .single();
+
+    // Fetch area name from Main DB
+    const { data: areaData } = await sbMain.from('areas').select('name').eq('id', profile.area_id).single();
+    profile.areas = { name: areaData ? areaData.name : 'Local Area' };
+    profile.user_id = profile.id; // ensure compatibility with user_id field
+
     driverProfile = profile;
     showDashboard();
   } else {
@@ -1399,10 +1367,7 @@ async function executeAccountDeletion() {
   try {
     showToast('Deleting account data...');
     // Delete driver profile row from drivers table in Leads DB
-    await sbLeads.from('drivers').delete().eq('id', driverProfile.user_id);
-    
-    // Delete profile row from businesses table in Main DB
-    const { error } = await sbMain.from('businesses').delete().eq('user_id', driverProfile.user_id);
+    const { error } = await sbLeads.from('drivers').delete().eq('id', driverProfile.id || driverProfile.user_id);
     if (error) {
       showToast('Error deleting profile: ' + error.message);
       return;
@@ -1418,7 +1383,7 @@ async function executeAccountDeletion() {
 
 // ─── LOGOUT ──────────────────────────────────────────────────────────────────
 async function logout() {
-  await sbMain.auth.signOut();
+  await sbLeads.auth.signOut();
   driverProfile = null;
   document.getElementById('authBox').classList.remove('hidden');
   document.getElementById('portalDashboard').classList.add('hidden');
@@ -1432,30 +1397,33 @@ async function logout() {
 // ─── BOOTSTRAP INITIALIZATION ────────────────────────────────────────────────
 async function init() {
   // Check if session is already active
-  const { data: { session } } = await sbMain.auth.getSession();
+  const { data: { session } } = await sbLeads.auth.getSession();
   await loadTownsDropdown();
 
   if (session) {
-    // Verify driver profile exists in businesses
-    const deliveryCatId = await getOrCreateDeliveryCategoryId();
-    const { data: profile } = await sbMain.from('businesses')
-      .select('*, areas(name)')
-      .eq('user_id', session.user.id)
-      .eq('category_id', deliveryCatId)
+    // Verify driver profile exists in Leads DB drivers table
+    const { data: profile } = await sbLeads.from('drivers')
+      .select('*')
+      .eq('id', session.user.id)
       .maybeSingle();
 
     if (profile) {
       if (!profile.is_approved) {
-        await sbMain.auth.signOut();
+        await sbLeads.auth.signOut();
         switchAuthTab('login');
         document.getElementById('login-err').textContent = 'Your driver account is pending approval by the manager.';
         return;
       }
+      // Fetch area name from Main DB
+      const { data: areaData } = await sbMain.from('areas').select('name').eq('id', profile.area_id).single();
+      profile.areas = { name: areaData ? areaData.name : 'Local Area' };
+      profile.user_id = profile.id; // ensure compatibility with user_id field
+
       driverProfile = profile;
       showDashboard();
       return;
     } else {
-      await sbMain.auth.signOut();
+      await sbLeads.auth.signOut();
     }
   }
 
