@@ -791,6 +791,7 @@ label {
   <div class="dash-tabs">
     <button class="dash-tab on" id="dtab-avail" onclick="switchDashboardTab('avail')">Available Deliveries</button>
     <button class="dash-tab" id="dtab-my" onclick="switchDashboardTab('my')">My Active Deliveries</button>
+    <button class="dash-tab" id="dtab-completed" onclick="switchDashboardTab('completed')">Completed Deliveries</button>
   </div>
 
   <!-- Deliveries Container -->
@@ -835,6 +836,27 @@ label {
   </div>
 </div>
 
+<!-- CANCEL/DELETE ORDER MODAL -->
+<div class="mo hidden" id="cancelOrderModal" style="display:flex; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; padding:16px;">
+  <div class="mbox" style="width:100%; max-width:400px; padding:24px; border-radius:12px; background:white; position:relative; box-shadow:var(--shadow-lg);">
+    <h3 style="font-size:16px; font-weight:700; color:#ef4444; margin-bottom:8px;">Cancel/Delete Request</h3>
+    <p style="font-size:12px; color:var(--t2); line-height:1.5; margin-bottom:12px;">
+      Please explain the reason for cancelling or deleting this delivery request. You must contact support via WhatsApp to request cancellation.
+    </p>
+    <input type="hidden" id="cancel-order-id"/>
+    <input type="hidden" id="cancel-order-ref"/>
+    <div class="fg" style="margin-bottom: 16px;">
+      <label for="cancelReasonInput">Reason for cancellation *</label>
+      <textarea id="cancelReasonInput" placeholder="e.g. Shop is closed / Customer cancelled the order" style="min-height: 80px; resize: vertical;"></textarea>
+    </div>
+    <div class="err" id="cancel-err" style="margin-bottom: 12px;"></div>
+    <div style="display:flex; flex-direction: column; gap:10px;">
+      <button class="btn-pri" id="cancelWaBtn" onclick="sendCancellationWhatsApp()" style="margin-top:0; background:#25d366; display:flex; align-items:center; justify-content:center; gap:6px;">💬 Send WhatsApp &amp; Cancel</button>
+      <button class="btn-pri" onclick="closeCancelModal()" style="margin-top:0; background:var(--bd); color:var(--t2);">Back</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── SUPABASE INITIALIZATION ────────────────────────────────────────────────
 const MAIN_DB_URL = 'https://khbotkadtbkwqxjxlyhm.supabase.co';
@@ -850,6 +872,7 @@ const sbLeads = createClient(LEADS_DB_URL, LEADS_REAL_KEY);
 // ─── STATE MANAGEMENT ───────────────────────────────────────────────────────
 let driverProfile = null;
 let activeTab = 'avail';
+let currentPage = 0;
 let localBusinesses = [];
 let localBusinessMap = {};
 let allOrders = [];
@@ -953,8 +976,10 @@ function showLoginAfterEmailCheck() {
 // Switching Dashboard Content Tabs
 function switchDashboardTab(tab) {
   activeTab = tab;
+  currentPage = 0;
   document.getElementById('dtab-avail').classList.toggle('on', tab === 'avail');
   document.getElementById('dtab-my').classList.toggle('on', tab === 'my');
+  document.getElementById('dtab-completed').classList.toggle('on', tab === 'completed');
   renderDeliveries();
 }
 
@@ -1202,28 +1227,37 @@ function renderDeliveries() {
   // Filter orders by active tab
   const filtered = allOrders.filter(o => {
     const isAssignedToMe = o.delivery_driver_id === driverProfile.user_id;
-    const isAssignedToOther = o.delivery_driver_id && !isAssignedToMe;
 
     if (activeTab === 'avail') {
-      // Unassigned delivery order
       return !o.delivery_driver_id && (o.delivery_status === 'pending' || o.status === 'pending' || o.status === 'confirmed');
-    } else {
-      // My Active deliveries
+    } else if (activeTab === 'my') {
       return isAssignedToMe && o.delivery_status === 'dispatched';
+    } else {
+      // Completed Tab
+      return isAssignedToMe && o.delivery_status === 'delivered';
     }
   });
 
   if (filtered.length === 0) {
+    let emptyMsg = 'Check back later for new delivery requests in your town.';
+    if (activeTab === 'my') emptyMsg = 'Go to "Available" tab and accept deliveries to start earning!';
+    else if (activeTab === 'completed') emptyMsg = 'You have not completed any deliveries yet.';
+
     grid.innerHTML = `
       <div class="empty-state">
-        <h3>No Deliveries Available</h3>
-        <p>${activeTab === 'avail' ? 'Check back later for new delivery requests in your town.' : 'Go to "Available" tab and accept deliveries to start earning!'}</p>
+        <h3>No Deliveries Found</h3>
+        <p>${emptyMsg}</p>
       </div>
     `;
     return;
   }
 
-  filtered.forEach(o => {
+  const pageSize = 10;
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  if (currentPage >= totalPages) currentPage = Math.max(0, totalPages - 1);
+  const pageItems = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  pageItems.forEach(o => {
     const card = document.createElement('div');
     card.className = 'delivery-card';
     
@@ -1288,8 +1322,13 @@ Total Bill: ₹${o.total_price}
 I will be arriving soon. Please share your live location or detailed address if needed. Thanks!`;
 
     card.innerHTML = `
-      <div class="card-header">
-        <span class="card-ref">${ref}</span>
+      <div class="card-header" style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${o.status !== 'delivered' && o.status !== 'cancelled' ? `
+            <button onclick="requestOrderCancellation('${o.id}', '${ref}')" style="background: none; border: none; font-size: 13px; color: #ef4444; padding: 4px; display: inline-flex; align-items: center; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Cancel Request">🗑️</button>
+          ` : ''}
+          <span class="card-ref">${ref}</span>
+        </div>
         <div class="card-charges"><span>Fee</span> ₹${o.delivery_charges || '50'}</div>
       </div>
       <div class="card-body">
@@ -1335,7 +1374,10 @@ I will be arriving soon. Please share your live location or detailed address if 
       <div class="card-footer">
         ${activeTab === 'avail' 
           ? `<button class="action-btn accept" onclick="acceptDelivery('${o.id}')">Accept Order</button>` 
-          : `<button class="action-btn complete" onclick="completeDelivery('${o.id}')">Mark As Delivered</button>`
+          : (activeTab === 'my' 
+              ? `<button class="action-btn complete" onclick="completeDelivery('${o.id}')">Mark As Delivered</button>`
+              : `<button class="action-btn completed" disabled style="background:#e2e8f0; color:#94a3b8; cursor:not-allowed;">Completed</button>`
+            )
         }
       </div>
     `;
@@ -1349,6 +1391,17 @@ I will be arriving soon. Please share your live location or detailed address if 
       }, 100);
     }
   });
+
+  if (totalPages > 1) {
+    const pRow = document.createElement('div');
+    pRow.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px 0;';
+    pRow.innerHTML = `
+      <button class="btn-pri" onclick="changePage(-1)" ${currentPage === 0 ? 'disabled' : ''} style="margin-top:0; background:var(--bd); color:var(--t2); width:auto; padding:8px 16px;">← Prev</button>
+      <span style="font-size:13px; font-weight:600; color:var(--t2);">${currentPage + 1} / ${totalPages}</span>
+      <button class="btn-pri" onclick="changePage(1)" ${currentPage >= totalPages - 1 ? 'disabled' : ''} style="margin-top:0; background:var(--bd); color:var(--t2); width:auto; padding:8px 16px;">Next →</button>
+    `;
+    grid.appendChild(pRow);
+  }
 }
 
 // Leaflet Route Map rendering inside cards
@@ -1457,6 +1510,63 @@ async function completeDelivery(orderId) {
   } catch(err) {
     console.error("Complete flow crash:", err);
     showToast('Failed to complete action.');
+  }
+}
+
+function changePage(delta) {
+  currentPage += delta;
+  renderDeliveries();
+  document.getElementById('portalDashboard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function requestOrderCancellation(orderId, ref) {
+  document.getElementById('cancel-order-id').value = orderId;
+  document.getElementById('cancel-order-ref').value = ref;
+  document.getElementById('cancelReasonInput').value = '';
+  document.getElementById('cancel-err').textContent = '';
+  document.getElementById('cancelOrderModal').classList.remove('hidden');
+}
+
+function closeCancelModal() {
+  document.getElementById('cancelOrderModal').classList.add('hidden');
+}
+
+async function sendCancellationWhatsApp() {
+  const reason = document.getElementById('cancelReasonInput').value.trim();
+  const orderId = document.getElementById('cancel-order-id').value;
+  const ref = document.getElementById('cancel-order-ref').value;
+  const err = document.getElementById('cancel-err');
+  
+  if (!reason) {
+    err.textContent = 'Please enter a reason for cancellation.';
+    return;
+  }
+  
+  const msg = `Hi MyPahad Support, I am delivery partner ${driverProfile.name} (${driverProfile.phone}). I would like to cancel delivery request ${ref}.
+Reason: ${reason}`;
+  
+  window.open(`https://wa.me/917876602575?text=${encodeURIComponent(msg)}`, '_blank');
+  
+  showToast('Cancelling order request...');
+  try {
+    const { error } = await sbLeads.from('orders')
+      .update({
+        status: 'cancelled',
+        notes: `[Cancelled by Delivery Partner: ${driverProfile.name} - Reason: ${reason}]\n` + (allOrders.find(x => x.id === orderId)?.notes || ''),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+      
+    if (error) {
+      showToast('Error updating database: ' + error.message);
+      return;
+    }
+    
+    showToast('Delivery request cancelled successfully!');
+    closeCancelModal();
+    loadOrdersData();
+  } catch(e) {
+    showToast('Cancellation update failed: ' + e.message);
   }
 }
 
