@@ -1624,6 +1624,9 @@ async function executeCancellation(openWhatsApp) {
     const { error } = await sbLeads.from('orders')
       .update({
         status: 'deleted',
+        driver_id: driverProfile.user_id,
+        driver_name: driverProfile.name,
+        driver_phone: driverProfile.phone,
         notes: `[Deleted by Deliverer: ${driverProfile.name} - Reason: ${reason}]\n` + (allOrders.find(x => x.id === orderId)?.notes || ''),
         updated_at: new Date().toISOString()
       })
