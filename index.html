@@ -671,8 +671,8 @@ label {
   </div>
   <div class="auth-body">
     <div class="tabs">
-      <div class="tab on" id="tab-login" onclick="switchAuthTab('login')">Driver Login</div>
-      <div class="tab" id="tab-reg" onclick="switchAuthTab('reg')">Register As Driver</div>
+      <div class="tab on" id="tab-login" onclick="switchAuthTab('login')">Partner Login</div>
+      <div class="tab" id="tab-reg" onclick="switchAuthTab('reg')">Register As Partner</div>
     </div>
 
     <!-- LOGIN FORM -->
@@ -684,9 +684,28 @@ label {
       <div class="fg">
         <label for="lp">Password</label>
         <input type="password" id="lp" placeholder="Password"/>
+        <div style="text-align: right; margin-top: 6px;">
+          <a href="#" onclick="switchAuthTab('forgot')" style="font-size: 11px; color: var(--g); text-decoration: none; font-weight: 500;">Forgot Password?</a>
+        </div>
       </div>
       <div class="err" id="login-err"></div>
       <button class="btn-pri" onclick="handleLogin()">Login →</button>
+    </div>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="form-forgot" class="hidden">
+      <p style="font-size: 12px; color: var(--t2); margin-bottom: 14px; line-height: 1.4;">
+        Enter your registered email address and we'll send you a password reset link.
+      </p>
+      <div class="fg">
+        <label for="fe">Email Address</label>
+        <input type="email" id="fe" placeholder="yourname@email.com"/>
+      </div>
+      <div class="err" id="forgot-err"></div>
+      <button class="btn-pri" onclick="handleForgotPassword()">Send Reset Link →</button>
+      <div style="text-align: center; margin-top: 14px;">
+        <a href="#" onclick="switchAuthTab('login')" style="font-size: 12px; color: var(--t2); text-decoration: none; font-weight: 600;">← Back to Login</a>
+      </div>
     </div>
 
     <!-- REGISTER FORM -->
@@ -696,7 +715,7 @@ label {
         <input type="text" id="rname" placeholder="Ramesh Sharma"/>
       </div>
       <div class="fg">
-        <label for="ruser">Driver Handle/Username *</label>
+        <label for="ruser">Handle/Username *</label>
         <input type="text" id="ruser" placeholder="ramesh_delivery" oninput="validateUsername(this.value)"/>
         <small id="user-status" style="font-size:10.5px;"></small>
       </div>
@@ -712,14 +731,14 @@ label {
       </div>
       <div class="fg">
         <label for="remail">Email Address *</label>
-        <input type="email" id="remail" placeholder="driver@email.com"/>
+        <input type="email" id="remail" placeholder="partner@email.com"/>
       </div>
       <div class="fg">
         <label for="rpass">Create Password *</label>
         <input type="password" id="rpass" placeholder="Min 6 characters"/>
       </div>
       <div class="err" id="reg-err"></div>
-      <button class="btn-pri" onclick="handleRegister()">Register As Driver →</button>
+      <button class="btn-pri" onclick="handleRegister()">Register As Partner →</button>
     </div>
 
     <!-- VERIFY EMAIL SCREEN -->
@@ -797,6 +816,25 @@ label {
   </div>
 </div>
 
+<!-- RESET PASSWORD MODAL -->
+<div class="mo hidden" id="resetPasswordModal" style="display:flex; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; padding:16px;">
+  <div class="mbox" style="width:100%; max-width:400px; padding:24px; border-radius:12px; background:white; position:relative; box-shadow:var(--shadow-lg);">
+    <h3 style="font-size:16px; font-weight:700; color:var(--g); margin-bottom:8px;">Set New Password</h3>
+    <p style="font-size:12px; color:var(--t2); line-height:1.5; margin-bottom:16px;">
+      Please enter your new password below (minimum 6 characters).
+    </p>
+    <div class="fg">
+      <label for="newPassInput">New Password</label>
+      <input type="password" id="newPassInput" placeholder="Min 6 characters"/>
+    </div>
+    <div class="err" id="reset-pass-err" style="margin-bottom: 12px;"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-pri" onclick="closeResetPasswordModal()" style="margin-top:0; background:var(--bd); color:var(--t2); flex:1;">Cancel</button>
+      <button class="btn-pri" onclick="executePasswordReset()" style="margin-top:0; flex:1;">Update Password</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── SUPABASE INITIALIZATION ────────────────────────────────────────────────
 const MAIN_DB_URL = 'https://khbotkadtbkwqxjxlyhm.supabase.co';
@@ -840,6 +878,70 @@ function switchAuthTab(tab) {
   document.getElementById('tab-reg').classList.toggle('on', tab === 'reg');
   document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
   document.getElementById('form-reg').classList.toggle('hidden', tab !== 'reg');
+  
+  const forgotForm = document.getElementById('form-forgot');
+  if (forgotForm) {
+    forgotForm.classList.toggle('hidden', tab !== 'forgot');
+  }
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('fe').value.trim();
+  const errDiv = document.getElementById('forgot-err');
+  errDiv.textContent = '';
+
+  if (!email) {
+    errDiv.textContent = 'Please enter your email address.';
+    return;
+  }
+
+  showToast('Sending reset link...');
+  const { error } = await sbLeads.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) {
+    errDiv.textContent = error.message;
+    return;
+  }
+
+  showToast('Password reset link sent to your email!');
+  document.getElementById('fe').value = '';
+  switchAuthTab('login');
+}
+
+function openResetPasswordModal() {
+  document.getElementById('resetPasswordModal').classList.remove('hidden');
+  document.getElementById('newPassInput').value = '';
+  document.getElementById('reset-pass-err').textContent = '';
+}
+
+function closeResetPasswordModal() {
+  document.getElementById('resetPasswordModal').classList.add('hidden');
+  window.location.hash = '';
+  history.replaceState(null, null, ' ');
+}
+
+async function executePasswordReset() {
+  const newPass = document.getElementById('newPassInput').value;
+  const errDiv = document.getElementById('reset-pass-err');
+  errDiv.textContent = '';
+
+  if (!newPass || newPass.length < 6) {
+    errDiv.textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+
+  showToast('Updating password...');
+  const { error } = await sbLeads.auth.updateUser({ password: newPass });
+
+  if (error) {
+    errDiv.textContent = error.message;
+    return;
+  }
+
+  showToast('Password updated successfully!');
+  closeResetPasswordModal();
 }
 
 function showLoginAfterEmailCheck() {
@@ -920,11 +1022,7 @@ async function handleLogin() {
     return;
   }
 
-  if (!profile.is_approved) {
-    await sbLeads.auth.signOut();
-    errDiv.textContent = 'Your driver account is pending approval by the manager.';
-    return;
-  }
+  // Bypassed is_approved check to allow login for unapproved partners so they can see pending dashboard overlay
 
   // Fetch area name from Main DB
   const { data: areaData } = await sbMain.from('areas').select('name').eq('id', profile.area_id).single();
@@ -1015,8 +1113,8 @@ async function showDashboard() {
 
   // Display Name/Town Info
   const townName = driverProfile.areas?.name || 'Local Area';
-  document.getElementById('navDriverName').textContent = driverProfile.business_name;
-  document.getElementById('dashDriverName').textContent = 'Welcome, ' + driverProfile.business_name;
+  document.getElementById('navDriverName').textContent = driverProfile.name;
+  document.getElementById('dashDriverName').textContent = 'Welcome, ' + driverProfile.name;
   document.getElementById('dashDriverArea').textContent = 'Service Region: ' + townName;
 
   if (!driverProfile.is_approved) {
@@ -1169,7 +1267,7 @@ function renderDeliveries() {
     const formattedBizPhone = formatPhoneForWhatsApp(biz.phone);
     const formattedCustPhone = formatPhoneForWhatsApp(o.customer_phone);
 
-    const bizWaMsg = `Hi, I am your delivery partner ${driverProfile.business_name} from MyPahad. I have accepted your order ${ref} for customer ${o.customer_name}. I am on my way to pick up the items:
+    const bizWaMsg = `Hi, I am your delivery partner ${driverProfile.name} from MyPahad. I have accepted your order ${ref} for customer ${o.customer_name}. I am on my way to pick up the items:
 
 ${itemsText}
 
@@ -1178,7 +1276,7 @@ Total: ₹${o.total_price}
 
 Please keep it ready. Thanks!`;
 
-    const custWaMsg = `Hi ${o.customer_name}, I am your delivery partner ${driverProfile.business_name} from MyPahad. I am delivering your order ${ref} from ${o.business_name}.
+    const custWaMsg = `Hi ${o.customer_name}, I am your delivery partner ${driverProfile.name} from MyPahad. I am delivering your order ${ref} from ${o.business_name}.
 
 Items:
 ${itemsText}
@@ -1318,10 +1416,10 @@ async function acceptDelivery(orderId) {
     const { error: uErr } = await sbLeads.from('orders')
       .update({
         driver_id: driverProfile.user_id,
-        driver_name: driverProfile.business_name,
+        driver_name: driverProfile.name,
         driver_phone: driverProfile.phone,
         status: 'dispatched',
-        notes: `[Driver Assigned: ${driverProfile.business_name} (${driverProfile.phone})]\n` + (o.notes || ''),
+        notes: `[Delivery Partner Assigned: ${driverProfile.name} (${driverProfile.phone})]\n` + (o.notes || ''),
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
@@ -1445,12 +1543,21 @@ async function logout() {
 
 // ─── BOOTSTRAP INITIALIZATION ────────────────────────────────────────────────
 async function init() {
-  // Detect if redirected from email confirmation link
+  // Detect if redirected from email confirmation or password recovery
   const hash = window.location.hash;
-  if (hash && (hash.includes('access_token=') || hash.includes('type=signup'))) {
-    showToast('Email verified successfully! Welcome to MyPahad.');
-    // Clean hash from URL without reloading
-    history.replaceState(null, null, ' ');
+  if (hash) {
+    if (hash.includes('type=recovery') || hash.includes('error_code=') || (hash.includes('access_token=') && !hash.includes('type=signup'))) {
+      if (hash.includes('error_description=')) {
+        const errorDesc = decodeURIComponent(hash.split('error_description=')[1].split('&')[0].replace(/\+/g, ' '));
+        showToast('Reset failed: ' + errorDesc);
+        history.replaceState(null, null, ' ');
+      } else {
+        openResetPasswordModal();
+      }
+    } else if (hash.includes('access_token=') || hash.includes('type=signup')) {
+      showToast('Email verified successfully! Welcome to MyPahad.');
+      history.replaceState(null, null, ' ');
+    }
   }
 
   // Check if session is already active
@@ -1465,12 +1572,6 @@ async function init() {
       .maybeSingle();
 
     if (profile) {
-      if (!profile.is_approved) {
-        await sbLeads.auth.signOut();
-        switchAuthTab('login');
-        document.getElementById('login-err').textContent = 'Your driver account is pending approval by the manager.';
-        return;
-      }
       // Fetch area name from Main DB
       const { data: areaData } = await sbMain.from('areas').select('name').eq('id', profile.area_id).single();
       profile.areas = { name: areaData ? areaData.name : 'Local Area' };
