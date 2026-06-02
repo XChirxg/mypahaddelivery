@@ -650,11 +650,17 @@ label {
 
 <!-- ================= AUTH NAV ================= -->
 <div class="nav" id="mainNav">
-  <div class="nav-brand">🏔 MyPahad <span>Delivery Portal</span></div>
+  <div class="nav-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+    MyPahad <span>Deliverer Portal</span>
+  </div>
   <div class="nav-profile hidden" id="navProfile">
     <span class="driver-name" id="navDriverName">Loading...</span>
     <div style="position:relative; display:inline-block;" id="settings-wrap">
-      <button class="logout-btn" onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
+      <button class="logout-btn" onclick="toggleSettingsMenu(event)" style="display: inline-flex; align-items: center; gap: 4px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
       <div class="settings-dd hidden" id="settingsMenu">
         <button onclick="openDeleteModal()" class="delete-btn">Delete Account</button>
         <button onclick="logout()" class="logout-action-btn">Logout</button>
@@ -666,13 +672,13 @@ label {
 <!-- ================= AUTH CONTAINER ================= -->
 <div class="auth-container" id="authBox">
   <div class="auth-header">
-    <h1>MyPahad Delivery</h1>
+    <h1>MyPahad Deliverer</h1>
     <p>Earn by delivering local orders in your town</p>
   </div>
   <div class="auth-body">
     <div class="tabs">
-      <div class="tab on" id="tab-login" onclick="switchAuthTab('login')">Partner Login</div>
-      <div class="tab" id="tab-reg" onclick="switchAuthTab('reg')">Register As Partner</div>
+      <div class="tab on" id="tab-login" onclick="switchAuthTab('login')">Deliverer Login</div>
+      <div class="tab" id="tab-reg" onclick="switchAuthTab('reg')">Register As Deliverer</div>
     </div>
 
     <!-- LOGIN FORM -->
@@ -731,19 +737,19 @@ label {
       </div>
       <div class="fg">
         <label for="remail">Email Address *</label>
-        <input type="email" id="remail" placeholder="partner@email.com"/>
+        <input type="email" id="remail" placeholder="deliverer@email.com"/>
       </div>
       <div class="fg">
         <label for="rpass">Create Password *</label>
         <input type="password" id="rpass" placeholder="Min 6 characters"/>
       </div>
       <div class="err" id="reg-err"></div>
-      <button class="btn-pri" onclick="handleRegister()">Register As Partner →</button>
+      <button class="btn-pri" onclick="handleRegister()">Register As Deliverer →</button>
     </div>
 
     <!-- VERIFY EMAIL SCREEN -->
     <div id="check-email-screen" class="hidden" style="text-align: center; padding: 20px 10px;">
-      <div style="font-size: 48px; margin-bottom: 16px;">📬</div>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
       <h2 style="font-size: 18px; font-weight: 700; color: var(--g); margin-bottom: 10px;">Verify Your Email</h2>
       <p style="font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 20px;">
         We have sent a verification link to your email address. Please open your email and verify your account.
@@ -758,10 +764,10 @@ label {
 
 <!-- ================= DASHBOARD PORTAL ================= -->
 <div class="portal-wrap hidden" id="portalDashboard">
-  <!-- Driver Details Bar -->
+  <!-- Deliverer Details Bar -->
   <div class="dashboard-header">
     <div class="driver-info">
-      <h2 id="dashDriverName">Loading Driver...</h2>
+      <h2 id="dashDriverName">Loading Deliverer...</h2>
       <p id="dashDriverArea">Service Area: Connecting...</p>
     </div>
     <div class="stats-bar">
@@ -778,10 +784,10 @@ label {
 
   <!-- Pending Approval Locked Screen Box -->
   <div id="pending-approval-box" class="hidden" style="background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 32px 24px; text-align: center; box-shadow: var(--shadow); margin-top: 10px;">
-    <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     <h3 style="font-size: 16px; font-weight: 700; color: #b45309; margin-bottom: 10px;">Manager Approval Required</h3>
     <p style="font-size: 13px; color: var(--t2); line-height: 1.6; max-width: 500px; margin: 0 auto;">
-      Your driver profile is currently pending activation. Account approvals are verified between <strong>24 hours to 1 week</strong>. 
+      Your deliverer profile is currently pending activation. Account approvals are verified between <strong>24 hours to 1 week</strong>. 
       <br><br>
       If your profile is not approved after 1 week, please contact us at <a href="mailto:contact@mypahad.in" style="color: var(--g); font-weight: 600; text-decoration: underline;">contact@mypahad.in</a>.
     </p>
@@ -801,7 +807,10 @@ label {
 <!-- DELETE ACCOUNT MODAL -->
 <div class="mo hidden" id="deleteModal" style="display:flex; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; padding:16px;">
   <div class="mbox" style="width:100%; max-width:400px; padding:24px; border-radius:12px; background:white; position:relative; box-shadow:var(--shadow-lg);">
-    <h3 style="font-size:16px; font-weight:700; color:#ef4444; margin-bottom:8px;">⚠️ Delete Account Permanent?</h3>
+    <h3 style="font-size:16px; font-weight:700; color:#ef4444; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Delete Account Permanent?
+    </h3>
     <p style="font-size:12px; color:var(--t2); line-height:1.5; margin-bottom:16px;">
       This action is permanent and cannot be undone. All your profile data, registration details, and active status will be permanently deleted from MyPahad.
     </p>
@@ -851,7 +860,7 @@ label {
     </div>
     <div class="err" id="cancel-err" style="margin-bottom: 12px;"></div>
     <div style="display:flex; flex-direction: column; gap:10px;">
-      <button class="btn-pri" id="cancelWaBtn" onclick="sendCancellationWhatsApp()" style="margin-top:0; background:#25d366; display:flex; align-items:center; justify-content:center; gap:6px;">💬 Send WhatsApp &amp; Cancel</button>
+      <button class="btn-pri" id="cancelWaBtn" onclick="sendCancellationWhatsApp()" style="margin-top:0; background:#25d366; display:flex; align-items:center; justify-content:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send WhatsApp &amp; Cancel</button>
       <button class="btn-pri" onclick="closeCancelModal()" style="margin-top:0; background:var(--bd); color:var(--t2);">Back</button>
     </div>
   </div>
@@ -1031,7 +1040,14 @@ async function handleLogin() {
 
   const { data, error } = await sbLeads.auth.signInWithPassword({ email, password });
   if (error) {
-    errDiv.textContent = error.message;
+    if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
+      switchAuthTab('reg');
+      document.getElementById('remail').value = email;
+      document.getElementById('rpass').value = password;
+      showToast('Account not found. Prefilled details for registration!');
+    } else {
+      errDiv.textContent = error.message;
+    }
     return;
   }
 
@@ -1043,7 +1059,7 @@ async function handleLogin() {
 
   if (pErr || !profile) {
     await sbLeads.auth.signOut();
-    errDiv.textContent = 'User account is not registered as a delivery partner.';
+    errDiv.textContent = 'User account is not registered as a deliverer.';
     return;
   }
 
@@ -1107,7 +1123,7 @@ async function handleRegister() {
   }
 
   if (data.session) {
-    showToast('Driver account registered successfully!');
+    showToast('Deliverer account registered successfully!');
     // Load profile
     const { data: profile } = await sbLeads.from('drivers')
       .select('*')
@@ -1301,7 +1317,7 @@ function renderDeliveries() {
     const formattedBizPhone = formatPhoneForWhatsApp(biz.phone);
     const formattedCustPhone = formatPhoneForWhatsApp(o.customer_phone);
 
-    const bizWaMsg = `Hi, I am your delivery partner ${driverProfile.name} from MyPahad. I have accepted your order ${ref} for customer ${o.customer_name}. I am on my way to pick up the items:
+    const bizWaMsg = `Hi, I am your deliverer ${driverProfile.name} from MyPahad. I have accepted your order ${ref} for customer ${o.customer_name}. I am on my way to pick up the items:
 
 ${itemsText}
 
@@ -1310,7 +1326,7 @@ Total: ₹${o.total_price}
 
 Please keep it ready. Thanks!`;
 
-    const custWaMsg = `Hi ${o.customer_name}, I am your delivery partner ${driverProfile.name} from MyPahad. I am delivering your order ${ref} from ${o.business_name}.
+    const custWaMsg = `Hi ${o.customer_name}, I am your deliverer ${driverProfile.name} from MyPahad. I am delivering your order ${ref} from ${o.business_name}.
 
 Items:
 ${itemsText}
@@ -1325,7 +1341,7 @@ I will be arriving soon. Please share your live location or detailed address if 
       <div class="card-header" style="position: relative; display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 8px;">
           ${o.status !== 'delivered' && o.status !== 'cancelled' ? `
-            <button onclick="requestOrderCancellation('${o.id}', '${ref}')" style="background: none; border: none; font-size: 13px; color: #ef4444; padding: 4px; display: inline-flex; align-items: center; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Cancel Request">🗑️</button>
+            <button onclick="requestOrderCancellation('${o.id}', '${ref}')" style="background: none; border: none; font-size: 13px; color: #ef4444; padding: 4px; display: inline-flex; align-items: center; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Cancel Request"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>
           ` : ''}
           <span class="card-ref">${ref}</span>
         </div>
@@ -1341,8 +1357,8 @@ I will be arriving soon. Please share your live location or detailed address if 
             <div class="route-addr">${pickupAddr}</div>
             ${biz.phone ? `
               <div class="route-contact">
-                <a href="tel:${biz.phone}" class="contact-btn">📞 Call</a>
-                <a href="https://wa.me/${formattedBizPhone}?text=${encodeURIComponent(bizWaMsg)}" target="_blank" class="contact-btn">💬 Chat</a>
+                <a href="tel:${biz.phone}" class="contact-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call</a>
+                <a href="https://wa.me/${formattedBizPhone}?text=${encodeURIComponent(bizWaMsg)}" target="_blank" class="contact-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Chat</a>
               </div>
             ` : ''}
           </div>
@@ -1356,8 +1372,8 @@ I will be arriving soon. Please share your live location or detailed address if 
             <div class="route-name">${o.customer_name}</div>
             <div class="route-addr">${dropoffAddr}</div>
             <div class="route-contact">
-              <a href="tel:${o.customer_phone}" class="contact-btn">📞 Call</a>
-              <a href="https://wa.me/${formattedCustPhone}?text=${encodeURIComponent(custWaMsg)}" target="_blank" class="contact-btn">💬 Chat</a>
+              <a href="tel:${o.customer_phone}" class="contact-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call</a>
+              <a href="https://wa.me/${formattedCustPhone}?text=${encodeURIComponent(custWaMsg)}" target="_blank" class="contact-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Chat</a>
             </div>
           </div>
         </div>
@@ -1460,7 +1476,7 @@ async function acceptDelivery(orderId) {
     }
 
     if (o.driver_id) {
-      showToast('This order has already been accepted by another driver.');
+      showToast('This order has already been accepted by another deliverer.');
       loadOrdersData();
       return;
     }
@@ -1472,7 +1488,7 @@ async function acceptDelivery(orderId) {
         driver_name: driverProfile.name,
         driver_phone: driverProfile.phone,
         status: 'dispatched',
-        notes: `[Delivery Partner Assigned: ${driverProfile.name} (${driverProfile.phone})]\n` + (o.notes || ''),
+        notes: `[Deliverer Assigned: ${driverProfile.name} (${driverProfile.phone})]\n` + (o.notes || ''),
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
@@ -1542,7 +1558,7 @@ async function sendCancellationWhatsApp() {
     return;
   }
   
-  const msg = `Hi MyPahad Support, I am delivery partner ${driverProfile.name} (${driverProfile.phone}). I would like to cancel delivery request ${ref}.
+  const msg = `Hi MyPahad Support, I am deliverer ${driverProfile.name} (${driverProfile.phone}). I would like to cancel delivery request ${ref}.
 Reason: ${reason}`;
   
   window.open(`https://wa.me/917876602575?text=${encodeURIComponent(msg)}`, '_blank');
@@ -1552,7 +1568,7 @@ Reason: ${reason}`;
     const { error } = await sbLeads.from('orders')
       .update({
         status: 'cancelled',
-        notes: `[Cancelled by Delivery Partner: ${driverProfile.name} - Reason: ${reason}]\n` + (allOrders.find(x => x.id === orderId)?.notes || ''),
+        notes: `[Cancelled by Deliverer: ${driverProfile.name} - Reason: ${reason}]\n` + (allOrders.find(x => x.id === orderId)?.notes || ''),
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
