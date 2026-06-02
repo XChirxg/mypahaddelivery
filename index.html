@@ -721,6 +721,19 @@ label {
       <div class="err" id="reg-err"></div>
       <button class="btn-pri" onclick="handleRegister()">Register As Driver →</button>
     </div>
+
+    <!-- VERIFY EMAIL SCREEN -->
+    <div id="check-email-screen" class="hidden" style="text-align: center; padding: 20px 10px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">📬</div>
+      <h2 style="font-size: 18px; font-weight: 700; color: var(--g); margin-bottom: 10px;">Verify Your Email</h2>
+      <p style="font-size: 12px; color: var(--t2); line-height: 1.5; margin-bottom: 20px;">
+        We have sent a verification link to your email address. Please open your email and verify your account.
+      </p>
+      <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--rs); padding: 12px; margin-bottom: 20px; font-size: 11px; color: #b45309; line-height: 1.4; text-align: left;">
+        <strong>Important:</strong> After clicking the verification link in your email, you will be automatically verified and logged in.
+      </div>
+      <button class="btn-pri" onclick="showLoginAfterEmailCheck()" style="background: #eee; color: #333; margin-top: 0; width: 100%;">Back to Login</button>
+    </div>
   </div>
 </div>
 
@@ -742,6 +755,17 @@ label {
         <div class="lbl">Completed</div>
       </div>
     </div>
+  </div>
+
+  <!-- Pending Approval Locked Screen Box -->
+  <div id="pending-approval-box" class="hidden" style="background: #fff; border: 1px solid var(--bd); border-radius: var(--r); padding: 32px 24px; text-align: center; box-shadow: var(--shadow); margin-top: 10px;">
+    <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+    <h3 style="font-size: 16px; font-weight: 700; color: #b45309; margin-bottom: 10px;">Manager Approval Required</h3>
+    <p style="font-size: 13px; color: var(--t2); line-height: 1.6; max-width: 500px; margin: 0 auto;">
+      Your driver profile is currently pending activation. Account approvals are verified between <strong>24 hours to 1 week</strong>. 
+      <br><br>
+      If your profile is not approved after 1 week, please contact us at <a href="mailto:contact@mypahad.in" style="color: var(--g); font-weight: 600; text-decoration: underline;">contact@mypahad.in</a>.
+    </p>
   </div>
 
   <!-- Dashboard Tabs -->
@@ -816,6 +840,12 @@ function switchAuthTab(tab) {
   document.getElementById('tab-reg').classList.toggle('on', tab === 'reg');
   document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
   document.getElementById('form-reg').classList.toggle('hidden', tab !== 'reg');
+}
+
+function showLoginAfterEmailCheck() {
+  document.getElementById('check-email-screen').classList.add('hidden');
+  document.querySelector('.tabs').classList.remove('hidden');
+  switchAuthTab('login');
 }
 
 // Switching Dashboard Content Tabs
@@ -969,9 +999,11 @@ async function handleRegister() {
     driverProfile = profile;
     showDashboard();
   } else {
-    showToast('Verification email sent! Please check your email to verify.');
-    switchAuthTab('login');
-    document.getElementById('le').value = email;
+    // Hide auth forms and show verify email screen
+    document.getElementById('form-login').classList.add('hidden');
+    document.getElementById('form-reg').classList.add('hidden');
+    document.querySelector('.tabs').classList.add('hidden');
+    document.getElementById('check-email-screen').classList.remove('hidden');
   }
 }
 
@@ -987,9 +1019,25 @@ async function showDashboard() {
   document.getElementById('dashDriverName').textContent = 'Welcome, ' + driverProfile.business_name;
   document.getElementById('dashDriverArea').textContent = 'Service Region: ' + townName;
 
-  // Load active businesses in driver's area
-  await loadAreaBusinesses();
-  await loadOrdersData();
+  if (!driverProfile.is_approved) {
+    // Show pending approval message and hide deliveries tabs/grid
+    document.getElementById('pending-approval-box').classList.remove('hidden');
+    document.querySelector('.dash-tabs').classList.add('hidden');
+    document.getElementById('deliveriesGrid').classList.add('hidden');
+    
+    // Set stats to -
+    document.getElementById('stat-active').textContent = '-';
+    document.getElementById('stat-total').textContent = '-';
+  } else {
+    // Normal flow
+    document.getElementById('pending-approval-box').classList.add('hidden');
+    document.querySelector('.dash-tabs').classList.remove('hidden');
+    document.getElementById('deliveriesGrid').classList.remove('hidden');
+    
+    // Load active businesses in driver's area
+    await loadAreaBusinesses();
+    await loadOrdersData();
+  }
 }
 
 async function loadAreaBusinesses() {
