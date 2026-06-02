@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Delivery Portal – MyPahad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --g: #1a5c3a;
+  --gl: #e8f5ee;
+  --ac: #e05a2b;
+  --bg: #f4f7f5;
+  --card-bg: #ffffff;
+  --t: #1e293b;
+  --t2: #475569;
+  --t3: #94a3b8;
+  --bd: #e2e8f0;
+  --r: 12px;
+  --rs: 6px;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg);
+  color: var(--t);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--bd);
+  border-radius: var(--rs);
+  background: #fff;
+  outline: none;
+  color: var(--t);
+  transition: border-color 0.15s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--g);
+  box-shadow: 0 0 0 3px rgba(26, 92, 58, 0.1);
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t2);
+  margin-bottom: 5px;
+}
+
+.fg {
+  margin-bottom: 14px;
+}
+
+.err {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* Toast Notification */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 30px;
+  z-index: 9999;
+  font-size: 12px;
+  font-weight: 500;
+  display: none;
+  box-shadow: var(--shadow-lg);
+  animation: popUp 0.2s ease;
+}
+
+@keyframes popUp {
+  from { transform: translate(-50%, 15px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* NAVBAR */
+.nav {
+  background: linear-gradient(135deg, #113c26, var(--g));
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.nav-brand {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-brand span {
+  font-size: 11px;
+  background: rgba(255,255,255,0.15);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.nav-profile {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-profile .driver-name {
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--rs);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* AUTHENTICATION SCREEN */
+.auth-container {
+  max-width: 440px;
+  width: 90%;
+  margin: 40px auto;
+  background: var(--card-bg);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--bd);
+}
+
+.auth-header {
+  background: linear-gradient(135deg, #113c26, var(--g));
+  padding: 30px 20px;
+  text-align: center;
+  color: #fff;
+}
+
+.auth-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.auth-header p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.auth-body {
+  padding: 24px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--bd);
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s ease;
+}
+
+.tab.on {
+  color: var(--g);
+  border-bottom-color: var(--g);
+}
+
+.btn-pri {
+  background: var(--g);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: var(--rs);
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-pri:hover {
+  background: #113c26;
+  box-shadow: 0 4px 12px rgba(26, 92, 58, 0.2);
+}
+
+/* PORTAL DASHBOARD */
+.portal-wrap {
+  flex: 1;
+  max-width: 1200px;
+  width: 95%;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-header {
+  background: var(--card-bg);
+  border-radius: var(--r);
+  border: 1px solid var(--bd);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  box-shadow: var(--shadow);
+}
+
+.driver-info h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--t);
+}
+
+.driver-info p {
+  font-size: 12px;
+  color: var(--t3);
+  margin-top: 2px;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 15px;
+}
+
+.stat-card {
+  background: var(--gl);
+  color: var(--g);
+  padding: 8px 16px;
+  border-radius: var(--rs);
+  text-align: center;
+  min-width: 100px;
+}
+
+.stat-card.active {
+  background: #fff5f2;
+  color: var(--ac);
+}
+
+.stat-card .num {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stat-card .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* DASHBOARD NAVIGATION TABS */
+.dash-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--bd);
+  padding-bottom: 1px;
+}
+
+.dash-tab {
+  background: none;
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t2);
+  border-radius: var(--rs) var(--rs) 0 0;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.dash-tab.on {
+  color: var(--g);
+  border-bottom-color: var(--g);
+  background: var(--card-bg);
+}
+
+/* LIST OF DELIVERIES */
+.delivery-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media(min-width: 900px) {
+  .delivery-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.delivery-card {
+  background: var(--card-bg);
+  border-radius: var(--r);
+  border: 1px solid var(--bd);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafbfa;
+}
+
+.card-ref {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--g);
+  background: var(--gl);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.card-charges {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ac);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-charges span {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--t3);
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+/* Map routing details */
+.card-map-container {
+  width: 100%;
+  height: 180px;
+  border-radius: var(--rs);
+  border: 1px solid var(--bd);
+  overflow: hidden;
+  position: relative;
+  background-color: #eee;
+}
+
+/* Pickup and Dropoff blocks */
+.route-section {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.route-section::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 9px;
+  bottom: -16px;
+  width: 2px;
+  border-left: 2px dashed var(--bd);
+  z-index: 1;
+}
+
+.route-section:last-of-type::before {
+  display: none;
+}
+
+.route-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  z-index: 2;
+  margin-top: 2px;
+}
+
+.route-icon.pickup {
+  background: #3b82f6;
+}
+
+.route-icon.drop {
+  background: #ef4444;
+}
+
+.route-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.route-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.route-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t);
+  margin-top: 1px;
+}
+
+.route-addr {
+  font-size: 12px;
+  color: var(--t2);
+  margin-top: 2px;
+}
+
+.route-contact {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--g);
+  background: var(--gl);
+  border: 1px solid #b5d9c5;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.contact-btn:hover {
+  background: var(--g);
+  color: white;
+}
+
+/* Items summary */
+.items-summary {
+  background: var(--bg);
+  padding: 10px 14px;
+  border-radius: var(--rs);
+}
+
+.items-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+}
+
+.items-list {
+  font-size: 12px;
+  color: var(--t2);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Actions footer */
+.card-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--bd);
+  background: #fafbfa;
+}
+
+.action-btn {
+  width: 100%;
+  border: none;
+  padding: 12px;
+  border-radius: var(--rs);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.action-btn.accept {
+  background: var(--g);
+  color: white;
+}
+
+.action-btn.accept:hover {
+  background: #113c26;
+  box-shadow: 0 4px 10px rgba(26, 92, 58, 0.15);
+}
+
+.action-btn.complete {
+  background: var(--ac);
+  color: white;
+}
+
+.action-btn.complete:hover {
+  background: #c2410c;
+  box-shadow: 0 4px 10px rgba(224, 90, 43, 0.15);
+}
+
+.action-btn.completed {
+  background: var(--bd);
+  color: var(--t3);
+  cursor: not-allowed;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  background: var(--card-bg);
+  border-radius: var(--r);
+  border: 1px dashed var(--t3);
+  padding: 40px;
+  text-align: center;
+  color: var(--t2);
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  font-size: 12px;
+  color: var(--t3);
+  margin-top: 4px;
+}
+
+.hidden {
+  display: none !important;
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ================= AUTH NAV ================= -->
+<div class="nav" id="mainNav">
+  <div class="nav-brand">🏔 MyPahad <span>Delivery Portal</span></div>
+  <div class="nav-profile hidden" id="navProfile">
+    <div class="driver-info-nav">
+      <span class="driver-name" id="navDriverName">Loading...</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- ================= AUTH CONTAINER ================= -->
+<div class="auth-container" id="authBox">
+  <div class="auth-header">
+    <h1>MyPahad Delivery</h1>
+    <p>Earn by delivering local orders in your town</p>
+  </div>
+  <div class="auth-body">
+    <div class="tabs">
+      <div class="tab on" id="tab-login" onclick="switchAuthTab('login')">Driver Login</div>
+      <div class="tab" id="tab-reg" onclick="switchAuthTab('reg')">Register As Driver</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <div class="fg">
+        <label for="le">Email Address</label>
+        <input type="email" id="le" placeholder="yourname@email.com"/>
+      </div>
+      <div class="fg">
+        <label for="lp">Password</label>
+        <input type="password" id="lp" placeholder="Password"/>
+      </div>
+      <div class="err" id="login-err"></div>
+      <button class="btn-pri" onclick="handleLogin()">Login →</button>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="form-reg" class="hidden">
+      <div class="fg">
+        <label for="rname">Full Name *</label>
+        <input type="text" id="rname" placeholder="Ramesh Sharma"/>
+      </div>
+      <div class="fg">
+        <label for="ruser">Driver Handle/Username *</label>
+        <input type="text" id="ruser" placeholder="ramesh_delivery" oninput="validateUsername(this.value)"/>
+        <small id="user-status" style="font-size:10.5px;"></small>
+      </div>
+      <div class="fg">
+        <label for="rtown">Town/Area of Service *</label>
+        <select id="rtown">
+          <option value="">Select your service area...</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label for="rphone">Phone / WhatsApp Number *</label>
+        <input type="tel" id="rphone" placeholder="9876543210"/>
+      </div>
+      <div class="fg">
+        <label for="remail">Email Address *</label>
+        <input type="email" id="remail" placeholder="driver@email.com"/>
+      </div>
+      <div class="fg">
+        <label for="rpass">Create Password *</label>
+        <input type="password" id="rpass" placeholder="Min 6 characters"/>
+      </div>
+      <div class="err" id="reg-err"></div>
+      <button class="btn-pri" onclick="handleRegister()">Register As Driver →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD PORTAL ================= -->
+<div class="portal-wrap hidden" id="portalDashboard">
+  <!-- Driver Details Bar -->
+  <div class="dashboard-header">
+    <div class="driver-info">
+      <h2 id="dashDriverName">Loading Driver...</h2>
+      <p id="dashDriverArea">Service Area: Connecting...</p>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="num" id="stat-active">0</div>
+        <div class="lbl">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-total">0</div>
+        <div class="lbl">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Tabs -->
+  <div class="dash-tabs">
+    <button class="dash-tab on" id="dtab-avail" onclick="switchDashboardTab('avail')">Available Deliveries</button>
+    <button class="dash-tab" id="dtab-my" onclick="switchDashboardTab('my')">My Active Deliveries</button>
+  </div>
+
+  <!-- Deliveries Container -->
+  <div class="delivery-list" id="deliveriesGrid"></div>
+</div>
+
+<script>
+// ─── SUPABASE INITIALIZATION ────────────────────────────────────────────────
+const MAIN_DB_URL = 'https://khbotkadtbkwqxjxlyhm.supabase.co';
+const MAIN_DB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYm90a2FkdGJrd3F4anhseWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NTU4OTAsImV4cCI6MjA4ODUzMTg5MH0.MnNTuoONyBTGZeO1qYyRUTtkRdFreK0OrOcYk66pWxs';
+
+const LEADS_DB_URL = 'https://rcyvtdmvimqvsrglrnwv.supabase.co';
+const LEADS_REAL_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjeXZ0ZG12aW1xdnNyZ2xybnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzOTQ1NTAsImV4cCI6MjA5NTk3MDU1MH0.kRvgihk-ZIT82L8W3vR9T0QASoCDeEsNwVsh7851KRk';
+
+const { createClient } = supabase;
+const sbMain = createClient(MAIN_DB_URL, MAIN_DB_KEY);
+const sbLeads = createClient(LEADS_DB_URL, LEADS_REAL_KEY);
+
+// ─── STATE MANAGEMENT ───────────────────────────────────────────────────────
+let driverProfile = null;
+let activeTab = 'avail';
+let localBusinesses = [];
+let localBusinessMap = {};
+let allOrders = [];
+let usernameTimeout = null;
+
+// Show Toast Alert
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// Switching Login/Register Tabs
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('on', tab === 'login');
+  document.getElementById('tab-reg').classList.toggle('on', tab === 'reg');
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-reg').classList.toggle('hidden', tab !== 'reg');
+}
+
+// Switching Dashboard Content Tabs
+function switchDashboardTab(tab) {
+  activeTab = tab;
+  document.getElementById('dtab-avail').classList.toggle('on', tab === 'avail');
+  document.getElementById('dtab-my').classList.toggle('on', tab === 'my');
+  renderDeliveries();
+}
+
+// Auto-check/create 'Delivery' category
+async function getOrCreateDeliveryCategoryId() {
+  const { data: exCat } = await sbMain.from('categories').select('id').eq('slug', 'delivery').maybeSingle();
+  if (exCat) return exCat.id;
+
+  const { data: newCat, error } = await sbMain.from('categories').insert({
+    name: 'Delivery',
+    slug: 'delivery'
+  }).select('id').single();
+
+  if (error) {
+    console.error("Failed creating Delivery category:", error);
+    return null;
+  }
+  return newCat.id;
+}
+
+// Verify username availability during signup
+async function validateUsername(val) {
+  clearTimeout(usernameTimeout);
+  const el = document.getElementById('user-status');
+  if (!val || val.length < 3) {
+    el.textContent = '';
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(val)) {
+    el.textContent = 'Only letters, numbers, and underscores allowed.';
+    el.style.color = 'red';
+    return;
+  }
+  
+  usernameTimeout = setTimeout(async () => {
+    const { data } = await sbMain.from('businesses').select('id').eq('username', val.trim().toLowerCase());
+    const taken = data && data.length > 0;
+    el.textContent = taken ? 'Username taken' : 'Username available';
+    el.style.color = taken ? 'red' : 'green';
+  }, 400);
+}
+
+// Initialize towns dropdown list
+async function loadTownsDropdown() {
+  const { data: areas } = await sbMain.from('areas').select('id, name').eq('is_active', true).order('name');
+  const select = document.getElementById('rtown');
+  select.innerHTML = '<option value="">Select your service area...</option>';
+  areas?.forEach(a => {
+    select.appendChild(new Option(a.name, a.id));
+  });
+}
+
+// ─── LOGIN FLOW ─────────────────────────────────────────────────────────────
+async function handleLogin() {
+  const email = document.getElementById('le').value.trim();
+  const password = document.getElementById('lp').value;
+  const errDiv = document.getElementById('login-err');
+  errDiv.textContent = '';
+
+  if (!email || !password) {
+    errDiv.textContent = 'Please enter email and password.';
+    return;
+  }
+
+  const { data, error } = await sbMain.auth.signInWithPassword({ email, password });
+  if (error) {
+    errDiv.textContent = error.message;
+    return;
+  }
+
+  // Load and verify delivery person profile
+  const deliveryCatId = await getOrCreateDeliveryCategoryId();
+  const { data: profile, error: pErr } = await sbMain.from('businesses')
+    .select('*, areas(name)')
+    .eq('user_id', data.user.id)
+    .eq('category_id', deliveryCatId)
+    .maybeSingle();
+
+  if (pErr || !profile) {
+    await sbMain.auth.signOut();
+    errDiv.textContent = 'User account is not registered as a delivery partner.';
+    return;
+  }
+
+  driverProfile = profile;
+  showDashboard();
+}
+
+// ─── REGISTRATION FLOW ───────────────────────────────────────────────────────
+async function handleRegister() {
+  const name = document.getElementById('rname').value.trim();
+  const uname = document.getElementById('ruser').value.trim().toLowerCase();
+  const areaId = document.getElementById('rtown').value;
+  const phone = document.getElementById('rphone').value.trim();
+  const email = document.getElementById('remail').value.trim();
+  const pass = document.getElementById('rpass').value;
+  const errDiv = document.getElementById('reg-err');
+  errDiv.textContent = '';
+
+  if (!name || !uname || !areaId || !phone || !email || !pass) {
+    errDiv.textContent = 'Please fill out all fields.';
+    return;
+  }
+  if (pass.length < 6) {
+    errDiv.textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+
+  // Ensure category exists
+  const deliveryCatId = await getOrCreateDeliveryCategoryId();
+  if (!deliveryCatId) {
+    errDiv.textContent = 'Database setup error. Could not assign category.';
+    return;
+  }
+
+  // Signup
+  const { data, error } = await sbMain.auth.signUp({ email, password: pass });
+  if (error) {
+    errDiv.textContent = error.message;
+    return;
+  }
+
+  const uid = data.user?.id;
+  if (!uid) {
+    errDiv.textContent = 'Sign up failed.';
+    return;
+  }
+
+  // Create Business record acting as Delivery Partner
+  const { error: iErr } = await sbMain.from('businesses').insert({
+    user_id: uid,
+    area_id: areaId,
+    business_name: name,
+    username: uname,
+    category_id: deliveryCatId,
+    type: 'service',
+    whatsapp: phone,
+    phone: phone,
+    address: 'Delivery Partner',
+    description: 'Registered MyPahad Delivery Driver',
+    is_approved: true, // auto-approve driver for testing
+    is_active: true
+  });
+
+  if (iErr) {
+    errDiv.textContent = 'Registration failed during profile setup: ' + iErr.message;
+    return;
+  }
+
+  if (data.session) {
+    showToast('Driver account registered successfully!');
+    // Load profile
+    const { data: profile } = await sbMain.from('businesses')
+      .select('*, areas(name)')
+      .eq('user_id', uid)
+      .single();
+    driverProfile = profile;
+    showDashboard();
+  } else {
+    showToast('Check email for verification, then login!');
+    switchAuthTab('login');
+    document.getElementById('le').value = email;
+  }
+}
+
+// ─── DASHBOARD MANAGEMENT ───────────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('authBox').classList.add('hidden');
+  document.getElementById('portalDashboard').classList.remove('hidden');
+  document.getElementById('navProfile').classList.remove('hidden');
+
+  // Display Name/Town Info
+  const townName = driverProfile.areas?.name || 'Local Area';
+  document.getElementById('navDriverName').textContent = driverProfile.business_name;
+  document.getElementById('dashDriverName').textContent = 'Welcome, ' + driverProfile.business_name;
+  document.getElementById('dashDriverArea').textContent = 'Service Region: ' + townName;
+
+  // Load active businesses in driver's area
+  await loadAreaBusinesses();
+  await loadOrdersData();
+}
+
+async function loadAreaBusinesses() {
+  const { data } = await sbMain.from('businesses')
+    .select('id, business_name, phone, address, latitude, longitude')
+    .eq('area_id', driverProfile.area_id);
+  localBusinesses = data || [];
+  
+  // Populate mapping
+  localBusinessMap = {};
+  localBusinesses.forEach(b => {
+    localBusinessMap[b.id] = b;
+  });
+}
+
+async function loadOrdersData() {
+  if (localBusinesses.length === 0) {
+    allOrders = [];
+    renderDeliveries();
+    return;
+  }
+
+  const bizIds = localBusinesses.map(b => b.id);
+  
+  // Fetch matching delivery orders
+  const { data, error } = await sbLeads.from('orders')
+    .select('*')
+    .in('business_id', bizIds)
+    .eq('delivery_type', 'delivery')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Failed fetching orders:", error);
+    return;
+  }
+
+  allOrders = data || [];
+  updateDashboardStats();
+  renderDeliveries();
+}
+
+function updateDashboardStats() {
+  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
+  
+  // Active deliveries: assigned to driver and dispatched status
+  const activeCount = allOrders.filter(o => {
+    return o.status === 'dispatched' && o.notes && o.notes.includes(driverMatchString);
+  }).length;
+
+  // Completed deliveries: assigned to driver and delivered status
+  const completedCount = allOrders.filter(o => {
+    return o.status === 'delivered' && o.notes && o.notes.includes(driverMatchString);
+  }).length;
+
+  document.getElementById('stat-active').textContent = activeCount;
+  document.getElementById('stat-total').textContent = completedCount;
+}
+
+// ─── RENDERING DELIVERIES LIST ────────────────────────────────────────────────
+function renderDeliveries() {
+  const grid = document.getElementById('deliveriesGrid');
+  grid.innerHTML = '';
+
+  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
+
+  // Filter orders by active tab
+  const filtered = allOrders.filter(o => {
+    const isAssignedToMe = o.notes && o.notes.includes(driverMatchString);
+    const isAssignedToOther = o.notes && o.notes.includes('[Delivery Assigned:') && !isAssignedToMe;
+
+    if (activeTab === 'avail') {
+      // Pending or Confirmed order that hasn't been assigned to anyone yet
+      return (o.status === 'pending' || o.status === 'confirmed') && !isAssignedToMe && !isAssignedToOther;
+    } else {
+      // My Active deliveries
+      return isAssignedToMe && o.status === 'dispatched';
+    }
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <h3>No Deliveries Available</h3>
+        <p>${activeTab === 'avail' ? 'Check back later for new delivery requests in your town.' : 'Go to "Available" tab and accept deliveries to start earning!'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(o => {
+    const card = document.createElement('div');
+    card.className = 'delivery-card';
+    
+    const biz = localBusinessMap[o.business_id] || {
+      business_name: o.business_name,
+      phone: '',
+      address: 'Shop Details unavailable'
+    };
+
+    // Calculate map coordinates
+    const pLat = parseFloat(o.business_location?.latitude) || parseFloat(biz.latitude) || null;
+    const pLng = parseFloat(o.business_location?.longitude) || parseFloat(biz.longitude) || null;
+    const dLat = parseFloat(o.delivery_lat) || null;
+    const dLng = parseFloat(o.delivery_lng) || null;
+
+    const ref = 'MP' + o.id.slice(0, 6).toUpperCase();
+    const mapId = 'map-' + o.id;
+
+    // Build items list representation
+    let itemsHtml = '';
+    try {
+      const itemsList = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+      if (Array.isArray(itemsList)) {
+        itemsHtml = itemsList.map(it => `${it.name} (${it.quantity} ${it.qty_label || 'Qty'})`).join(', ');
+      }
+    } catch(e){}
+
+    // Build pickup business details
+    const pickupAddr = o.business_location?.address || biz.address || 'Town Shop';
+    const dropoffAddr = o.delivery_address || 'Customer Location';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-ref">${ref}</span>
+        <div class="card-charges"><span>Fee</span> ₹${o.delivery_charges || '50'}</div>
+      </div>
+      <div class="card-body">
+        <!-- Pick up Info -->
+        <div class="route-section">
+          <div class="route-icon pickup">A</div>
+          <div class="route-details">
+            <div class="route-label">PICK UP FROM</div>
+            <div class="route-name">${o.business_name}</div>
+            <div class="route-addr">${pickupAddr}</div>
+            ${biz.phone ? `
+              <div class="route-contact">
+                <a href="tel:${biz.phone}" class="contact-btn">📞 Call</a>
+                <a href="https://wa.me/91${biz.phone}" target="_blank" class="contact-btn">💬 Chat</a>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Drop off Info -->
+        <div class="route-section">
+          <div class="route-icon drop">B</div>
+          <div class="route-details">
+            <div class="route-label">DROP OFF TO</div>
+            <div class="route-name">${o.customer_name}</div>
+            <div class="route-addr">${dropoffAddr}</div>
+            <div class="route-contact">
+              <a href="tel:${o.customer_phone}" class="contact-btn">📞 Call</a>
+              <a href="https://wa.me/91${o.customer_phone}" target="_blank" class="contact-btn">💬 Chat</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Summary -->
+        <div class="items-summary">
+          <div class="items-title">Items Checklist</div>
+          <div class="items-list">${itemsHtml || 'Standard Package'}</div>
+        </div>
+
+        <!-- Route Map -->
+        ${(pLat && dLat) ? `<div class="card-map-container" id="${mapId}"></div>` : ''}
+      </div>
+      <div class="card-footer">
+        ${activeTab === 'avail' 
+          ? `<button class="action-btn accept" onclick="acceptDelivery('${o.id}')">Accept Order</button>` 
+          : `<button class="action-btn complete" onclick="completeDelivery('${o.id}')">Mark As Delivered</button>`
+        }
+      </div>
+    `;
+
+    grid.appendChild(card);
+
+    // Instantiate Route Map for card dynamically
+    if (pLat && dLat) {
+      setTimeout(() => {
+        initCardMap(mapId, [pLat, pLng], [dLat, dLng]);
+      }, 100);
+    }
+  });
+}
+
+// Leaflet Route Map rendering inside cards
+function initCardMap(mapId, pickupLL, dropoffLL) {
+  const container = document.getElementById(mapId);
+  if (!container) return;
+
+  const map = L.map(mapId, {
+    zoomControl: false,
+    attributionControl: false
+  }).setView(pickupLL, 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // Custom icons
+  const pickupIcon = L.divIcon({
+    html: `<div style="background:#3b82f6;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)">A</div>`,
+    iconSize: [24, 24], iconAnchor: [12, 12], className: ''
+  });
+
+  const dropIcon = L.divIcon({
+    html: `<div style="background:#ef4444;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)">B</div>`,
+    iconSize: [24, 24], iconAnchor: [12, 12], className: ''
+  });
+
+  L.marker(pickupLL, { icon: pickupIcon }).addTo(map).bindPopup("<b>Pickup:</b> Shop");
+  L.marker(dropoffLL, { icon: dropIcon }).addTo(map).bindPopup("<b>Drop:</b> Customer");
+
+  // Connected routing line
+  const routeLine = L.polyline([pickupLL, dropoffLL], {
+    color: '#10b981',
+    weight: 4,
+    opacity: 0.8,
+    dashArray: '5, 8'
+  }).addTo(map);
+
+  // Fit bounds containing both markers
+  const bounds = L.latLngBounds([pickupLL, dropoffLL]);
+  map.fitBounds(bounds, { padding: [20, 20] });
+}
+
+// ─── ORDER ACCEPTANCE LOGIC ──────────────────────────────────────────────────
+async function acceptDelivery(orderId) {
+  const driverMatchString = `[Delivery Assigned: ${driverProfile.business_name} (${driverProfile.phone})]`;
+  
+  try {
+    // 1. Transaction check: verify order is still unassigned
+    const { data: o, error: fErr } = await sbLeads.from('orders').select('*').eq('id', orderId).single();
+    if (fErr || !o) {
+      showToast('Delivery order details not found.');
+      return;
+    }
+
+    if (o.notes && o.notes.includes('[Delivery Assigned:')) {
+      showToast('This order has already been accepted by another driver.');
+      loadOrdersData();
+      return;
+    }
+
+    // 2. Perform safe atomic update logging assignment details to notes
+    const newNotes = o.notes ? `${o.notes}\n\n${driverMatchString}` : driverMatchString;
+    
+    const { error: uErr } = await sbLeads.from('orders')
+      .update({
+        status: 'dispatched',
+        notes: newNotes,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    if (uErr) {
+      showToast('Error accepting delivery: ' + uErr.message);
+      return;
+    }
+
+    showToast('Delivery accepted successfully!');
+    loadOrdersData();
+  } catch (err) {
+    console.error("Accept flow crash:", err);
+    showToast('Failed to complete action.');
+  }
+}
+
+// ─── COMPLETION LOGIC ────────────────────────────────────────────────────────
+async function completeDelivery(orderId) {
+  try {
+    const { error } = await sbLeads.from('orders')
+      .update({
+        status: 'delivered',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      showToast('Error completing order: ' + error.message);
+      return;
+    }
+
+    showToast('Order completed! Delivery payout logged.');
+    loadOrdersData();
+  } catch(err) {
+    console.error("Complete flow crash:", err);
+    showToast('Failed to complete action.');
+  }
+}
+
+// ─── LOGOUT ──────────────────────────────────────────────────────────────────
+async function logout() {
+  await sbMain.auth.signOut();
+  driverProfile = null;
+  document.getElementById('authBox').classList.remove('hidden');
+  document.getElementById('portalDashboard').classList.add('hidden');
+  document.getElementById('navProfile').classList.add('hidden');
+  
+  // Reset form inputs
+  document.getElementById('le').value = '';
+  document.getElementById('lp').value = '';
+}
+
+// ─── BOOTSTRAP INITIALIZATION ────────────────────────────────────────────────
+async function init() {
+  // Check if session is already active
+  const { data: { session } } = await sbMain.auth.getSession();
+  await loadTownsDropdown();
+
+  if (session) {
+    // Verify driver profile exists in businesses
+    const deliveryCatId = await getOrCreateDeliveryCategoryId();
+    const { data: profile } = await sbMain.from('businesses')
+      .select('*, areas(name)')
+      .eq('user_id', session.user.id)
+      .eq('category_id', deliveryCatId)
+      .maybeSingle();
+
+    if (profile) {
+      driverProfile = profile;
+      showDashboard();
+      return;
+    } else {
+      await sbMain.auth.signOut();
+    }
+  }
+
+  // Otherwise keep auth forms visible
+  switchAuthTab('login');
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
